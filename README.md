@@ -150,9 +150,9 @@ to `files/tmux/tmux.conf` and `files/herdr/config.toml`, which replace
 Omarchy's outright.
 
 `files/hypr/bindings.lua` and `autostart.lua` are safe to replace wholesale —
-Omarchy ships those as empty user-override templates. `input.lua` and
-`hyprland.lua` are *appended to* by `after/06-hypr` for exactly this reason,
-guarded so re-running does not duplicate the block.
+Omarchy ships those as empty user-override templates. `input.lua`,
+`hyprland.lua` and `looknfeel.lua` are *appended to* by `after/06-hypr` for
+exactly this reason, guarded so re-running does not duplicate the block.
 
 **Everything replaced is backed up** as `<name>.omarchy-backup-<timestamp>`
 next to the original.
@@ -167,6 +167,16 @@ Deployed to `~/.config/scripts/`.
 | `herdr-sessionizer.sh` | Same picker → herdr workspace. Focuses by `label` if it exists, else creates with `--cwd --label --focus`. |
 | `herdr-focus-blocked.sh` | Cycles focus through agents with `agent_status == "blocked"`. Bound to `prefix+shift+o`. |
 | `hypr-focus-mode-toggle.sh` | i3's `focus mode_toggle` — Hyprland has no equivalent, so this walks the client list. Bound to `SUPER+SPACE`. |
+
+## Notes on Omarchy defaults worth knowing
+
+**Unfocused windows are slightly transparent out of the box.** Omarchy tags
+every window `default-opacity` and applies `opacity = "0.985 0.96"` (active,
+inactive) in `/usr/share/omarchy/default/hypr/windows.lua`. It is a *window
+rule*, not a global setting — `decoration:inactive_opacity` reads `1.0`, so
+checking that option suggests nothing is transparent. `files/hypr/looknfeel.snippet.lua`
+re-applies the rule as `"1.0 1.0"` to turn it off. `SUPER+BACKSPACE` toggles it
+per window without any config change.
 
 ## TODO
 

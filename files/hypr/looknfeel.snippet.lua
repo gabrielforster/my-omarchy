@@ -1,0 +1,14 @@
+-- ---------------------------------------------------------------------------
+-- Fully opaque windows.
+--
+-- Omarchy tags every window "default-opacity" and applies
+-- `opacity = "0.985 0.96"` (active inactive) in
+-- /usr/share/omarchy/default/hypr/windows.lua, which is what makes unfocused
+-- windows look slightly transparent. That file is package-owned and must not
+-- be edited; this re-applies the same rule with no transparency, and wins
+-- because user config loads after Omarchy's defaults.
+--
+-- Note this is a window rule, not decoration:inactive_opacity — that global
+-- option is already 1.0 and is not what dims the windows.
+-- ---------------------------------------------------------------------------
+o.window({ tag = "default-opacity" }, { opacity = "1.0 1.0" })

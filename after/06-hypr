@@ -36,6 +36,8 @@ append_once "repeat_delay = 200" ~/.config/hypr/input.lua \
   "$repo_dir/files/hypr/input.snippet.lua"
 append_once 'o.window("^([Dd]iscord)$"' ~/.config/hypr/hyprland.lua \
   "$repo_dir/files/hypr/windows.snippet.lua"
+append_once 'opacity = "1.0 1.0"' ~/.config/hypr/looknfeel.lua \
+  "$repo_dir/files/hypr/looknfeel.snippet.lua"
 
 hyprctl reload
 echo "--- hyprctl configerrors (empty is good) ---"

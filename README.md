@@ -192,7 +192,7 @@ in **Setup Mode**, which means clearing the UEFI keys from the BIOS by hand. The
 script reads `SetupMode` straight out of efivars and stops with vendor-specific
 instructions when it is not enabled, rather than failing halfway through.
 
-Three deviations from the guide, all deliberate:
+Four deviations from the guide, all deliberate:
 
 - The guide prints a full `HOOKS=` line to paste into `/etc/mkinitcpio.conf`.
   That line is the **udev** initramfs flavour (`udev`, `keymap`, `consolefont`);
@@ -210,8 +210,14 @@ Three deviations from the guide, all deliberate:
   invalidates the hash — producing `Blake2b hash for URI ... does not match!` at
   every boot, and recurring on every kernel update because the same race repeats.
   Secure Boot already verifies the UKI against the enrolled keys, so the BLAKE2b
-  check is redundant. `limine-update` is re-run after signing regardless, so
-  limine.conf always reflects the files that are actually on the ESP.
+  check is redundant.
+- `ENABLE_LIMINE_FALLBACK=no` is pinned, and **signing runs last**, after
+  `limine-update`. `limine-update` calls `limine-install`, which reinstalls
+  `/boot/EFI/BOOT/BOOTX64.EFI` *unsigned* on every run — limine's own config
+  file documents this ("the default fallback is not signed automatically by
+  limine-update for some reason"). Signing before `limine-update` therefore
+  produces a silently un-signed fallback loader. Anything that rewrites the ESP
+  has to happen before the signing step, never after.
 
 ### Windows in the boot menu
 

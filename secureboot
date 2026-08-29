@@ -74,12 +74,21 @@ fi
 # recurs on every kernel update, because mkinitcpio rebuilds before sbctl's hook
 # re-signs. Secure Boot verifies the UKI with the enrolled keys, so the BLAKE2b
 # check is redundant here. Turn it off before building.
-note "Disabling Limine's BLAKE2b verification (redundant under Secure Boot)"
-if grep -qE '^\s*ENABLE_VERIFICATION=' /etc/default/limine 2>/dev/null; then
-  sudo sed -i -E 's|^\s*ENABLE_VERIFICATION=.*|ENABLE_VERIFICATION=no|' /etc/default/limine
-else
-  echo 'ENABLE_VERIFICATION=no' | sudo tee -a /etc/default/limine >/dev/null
-fi
+# limine-update also reinstalls /boot/EFI/BOOT/BOOTX64.EFI, unsigned, on every
+# run -- limine's own config file documents this. Left alone it silently
+# un-signs the fallback loader after we sign it.
+note "Pinning Limine settings that fight with Secure Boot"
+set_limine_default() {
+  local key=$1 value=$2
+  if grep -qE "^\\s*${key}=" /etc/default/limine 2>/dev/null; then
+    sudo sed -i -E "s|^\\s*${key}=.*|${key}=${value}|" /etc/default/limine
+  else
+    echo "${key}=${value}" | sudo tee -a /etc/default/limine >/dev/null
+  fi
+  echo "  ${key}=${value}"
+}
+set_limine_default ENABLE_VERIFICATION no
+set_limine_default ENABLE_LIMINE_FALLBACK no
 
 note "Rebuilding the boot images"
 sudo limine-mkinitcpio
@@ -99,12 +108,13 @@ note "Enrolling keys (Microsoft keys included, for Windows)"
 sudo sbctl enroll-keys -m
 
 # --- signing --------------------------------------------------------------
+# Order matters: limine-update rewrites files on the ESP, so it has to run
+# BEFORE signing. Signing last guarantees nothing un-signs a file afterwards.
+note "Regenerating limine.conf"
+sudo limine-update
+
 note "Signing everything sbctl reports as unsigned"
 sudo sbctl verify | sed -nE 's|^✗ (/.+) is not signed$|sbctl sign -s "\1"|p' | sudo sh || true
-
-# Signing changed the files on the ESP, so regenerate limine.conf against them.
-note "Regenerating limine.conf against the signed files"
-sudo limine-update
 
 note "Final verification -- every entry below must be signed"
 sudo sbctl verify

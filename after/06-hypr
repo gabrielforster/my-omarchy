@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Hyprland: the i3 keybinding port, keyboard settings, autostart and window
+# rules.
+#
+# Omarchy loads ~/.config/hypr/*.lua after its own defaults, so these are
+# overrides rather than a fork of the defaults. bindings.lua and autostart.lua
+# are replaced outright; input.lua and hyprland.lua only get a block appended,
+# so Omarchy can keep improving the rest of those files.
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ts=$(date +%Y%m%d-%H%M%S)
+
+backup() { [[ -e $1 ]] && cp "$1" "$1.omarchy-backup-$ts" && echo "backed up $1"; return 0; }
+
+backup ~/.config/hypr/bindings.lua
+install -Dm644 "$repo_dir/files/hypr/bindings.lua" ~/.config/hypr/bindings.lua
+
+backup ~/.config/hypr/autostart.lua
+install -Dm644 "$repo_dir/files/hypr/autostart.lua" ~/.config/hypr/autostart.lua
+
+# Appended, and only once.
+append_once() {
+  local marker="$1" target="$2" snippet="$3"
+  if grep -qF "$marker" "$target" 2>/dev/null; then
+    echo "$(basename "$target"): already patched"
+  else
+    backup "$target"
+    printf '\n' >> "$target"
+    cat "$snippet" >> "$target"
+    echo "$(basename "$target"): patched"
+  fi
+}
+
+append_once "repeat_delay = 200" ~/.config/hypr/input.lua \
+  "$repo_dir/files/hypr/input.snippet.lua"
+append_once 'o.window("^([Dd]iscord)$"' ~/.config/hypr/hyprland.lua \
+  "$repo_dir/files/hypr/windows.snippet.lua"
+
+hyprctl reload
+echo "--- hyprctl configerrors (empty is good) ---"
+hyprctl configerrors

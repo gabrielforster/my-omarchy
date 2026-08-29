@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# AUR-only packages.
+set -euo pipefail
+
+omarchy pkg aur add insomnia-bin

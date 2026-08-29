@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Runtimes via mise, which Omarchy already uses (it runs claude/codex/gh
+# through it). asdf is deliberately not installed -- two version managers
+# both putting shims on PATH is a fight, and mise reads .tool-versions.
+set -euo pipefail
+
+command -v mise >/dev/null || { echo "mise missing -- is this Omarchy?" >&2; exit 1; }
+
+for v in 24.16.0 22.13.0 20.12.0 16.20.0 14.18.0; do
+  mise install "node@$v"
+done
+
+# Global node is left at whatever Omarchy pinned (26.7.0 at time of writing);
+# per-project versions come from .tool-versions / .mise.toml.
+
+mise install ruby@3.4.8
+mise install java@openjdk-25.0.2
+mise install java@openjdk-24.0.2
+mise install java@openjdk-11.0.2
+# mise has no openjdk-8; temurin is the standard OpenJDK 8 build.
+mise install java@temurin-8.0.462+8
+mise install rust@stable
+
+mise use -g ruby@3.4.8 java@openjdk-25.0.2 rust@stable
+
+mise ls

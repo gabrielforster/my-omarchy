@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# zsh as the login shell, with $ZDOTDIR pointing at the config repo.
+#
+# Omarchy is built around bash and keeps its own bash config; that is left
+# alone. Nothing here touches it.
+set -euo pipefail
+
+command -v zsh >/dev/null || { echo "zsh not installed -- run scripts/packages first" >&2; exit 1; }
+
+# zsh reads ~/.zshenv before anything else; it only exists to redirect to
+# ~/.config/zsh so no other dotfile lands in $HOME.
+cat > ~/.zshenv <<'ZSHENV'
+export ZDOTDIR="$HOME/.config/zsh"
+[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"
+ZSHENV
+
+mkdir -p ~/.cache/zsh ~/.local/state/zsh
+
+if [[ $SHELL != *zsh ]]; then
+  chsh -s "$(command -v zsh)"
+else
+  echo "login shell already zsh"
+fi

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Ghostty.
+#
+# `omarchy install terminal` does more than a plain package add: it installs
+# the desktop entry with the X-TerminalArg keys, then points
+# xdg-terminal-exec at it. SUPER+Return goes through xdg-terminal-exec, so
+# this is what makes the keybinding open ghostty -- there is no terminal
+# binding to override in bindings.lua.
+set -euo pipefail
+
+omarchy install terminal ghostty

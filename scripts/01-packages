@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Repo packages. Everything here is in the official Arch repos or Omarchy's
+# own repo, so `omarchy pkg add` covers it (it no-ops on what's present).
+set -euo pipefail
+
+omarchy pkg add \
+  zsh \
+  glow git-delta uv pnpm aws-cli-v2 \
+  cmake ninja gettext base-devel unzip wl-clipboard \
+  ttf-ubuntu-nerd ttf-ubuntu-mono-nerd ttf-firacode-nerd otf-firamono-nerd ttf-adwaitamono-nerd \
+  dbeaver discord obs-studio spotify
+
+# Already shipped by Omarchy, listed so the intent is on record:
+#   eza bat fd ripgrep fzf zoxide starship tmux neovim docker lazygit jq btop
+#   google-chrome chromium

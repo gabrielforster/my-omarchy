@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Git config.
+#
+# Omarchy keeps git config at ~/.config/git/config (XDG) and there is no
+# ~/.gitconfig, so `git config --global` writes to the XDG file. Omarchy's
+# defaults already cover the aliases, rerere, push.autoSetupRemote, diff and
+# branch/tag sorting -- only the rest is set here.
+set -euo pipefail
+
+git config --global core.editor nvim
+git config --global core.pager delta
+git config --global delta.line-numbers true
+git config --global delta.navigate true
+git config --global interactive.diffFilter "delta --color-only"
+git config --global branch.autoSetupMerge always
+
+# SSH commit signing instead of the GPG key from the old machine.
+# Reminder: the key has to be added to GitHub a SECOND time, as a Signing
+# Key -- an authentication key does not make commits show as Verified.
+key="$HOME/.ssh/id_ed25519.pub"
+if [[ -f $key ]]; then
+  git config --global gpg.format ssh
+  git config --global user.signingkey "$key"
+  git config --global commit.gpgsign true
+  git config --global tag.gpgsign true
+  git config --global gpg.ssh.allowedSignersFile "$HOME/.config/git/allowed_signers"
+  printf '%s %s\n' "$(git config --global user.email)" "$(cat "$key")" \
+    > ~/.config/git/allowed_signers
+else
+  echo "no $key -- skipping commit signing setup" >&2
+fi

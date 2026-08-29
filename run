@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+#
+# TODO: check if it needs to run all `scripts` and `after`,
+# only `scripts`,
+# or only `after`;
+#
+
+script_dir="$(
+  cd "$(
+    dirname "${BASH_SOURCE[0]}"
+  )" &> /dev/null && pwd
+)"
+echo "$script_dir"
+
+filter=""
+filter_out=""
+dry=""
+
+while [[ $# > 0 ]]; do
+  case $1 in
+    --dry) dry="1" ;;
+    --filter) filter="$2"; shift ;;
+    --filter=*) filter="${1#*=}" ;;
+    --filter-out) filter_out="$2"; shift ;;
+    --filter-out=*) filter_out="${1#*=}" ;;
+    *) filter="$1" ;;
+  esac
+  shift
+done
+
+log () {
+  if [[ $dry = "1" ]]; then
+    echo "[DRY_RUN]: $@"
+  else
+    echo "$@"
+  fi
+}
+
+execute () {
+  log "execute $@"
+  if [[ $dry = "1" ]]; then
+    return
+  fi
+
+  "$@"
+}
+
+# comma separated list, plain substring match (no grep/rg dependency)
+matches () {
+  local script="$1" pattern
+  local IFS=","
+  for pattern in $2; do
+    [[ -n $pattern && $script == *"$pattern"* ]] && return 0
+  done
+  return 1
+}
+
+keep () {
+  if [[ -n $filter ]] && ! matches "$1" "$filter"; then
+    return 1
+  fi
+
+  if [[ -n $filter_out ]] && matches "$1" "$filter_out"; then
+    return 1
+  fi
+
+  return 0
+}
+
+echo "Run: dir $script_dir -- filter \"$filter\" -- filter-out \"$filter_out\""
+
+cd $script_dir
+scripts=$(
+  find ./scripts -maxdepth 1 -mindepth 1 -executable -type f | sort
+  find ./after -maxdepth 1 -mindepth 1 -executable -type f | sort
+)
+
+for script in $scripts; do
+  if ! keep "$script"; then
+    log "filtering $script"
+    continue
+  fi
+
+  execute $script
+done

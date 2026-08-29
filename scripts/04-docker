@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Docker ships with Omarchy; this only wires up the user and the service.
+set -euo pipefail
+
+if id -nG "$USER" | grep -qw docker; then
+  echo "already in docker group"
+else
+  sudo usermod -aG docker "$USER"
+  echo "added to docker group -- takes effect after logout/login"
+fi
+
+sudo systemctl enable --now docker.service

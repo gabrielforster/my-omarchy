@@ -1,0 +1,54 @@
+onboarding = false
+# ~/.config/herdr/config.toml
+# Ported from .tmux.conf — herdr 0.7.5 key names
+# Reload after editing: herdr server reload-config
+
+[keys]
+prefix = "ctrl+b"
+
+# Navigate mode: vim motions walk the sidebar workspace list.
+# Vertical pane movement moves to the arrows that workspaces gave up.
+navigate_workspace_up   = "k"
+navigate_workspace_down = "j"
+navigate_pane_up        = "up"
+navigate_pane_down      = "down"
+
+split_horizontal = "prefix+\""
+split_vertical = "prefix+%"
+
+cycle_pane_previous = ""
+next_agent = "prefix+tab"
+previous_agent = "prefix+shift+tab"
+
+# jumps to the toast target; only fires while a toast is on screen
+open_notification_target = "prefix+o"
+
+# prefix+[ into copy mode, as in tmux
+copy_mode = "prefix+["
+
+# base-index 1 equivalent: tab jumps are 1-based
+switch_tab = "prefix+1..9"
+
+[ui]
+# set -g mouse on
+mouse_capture = true
+copy_on_select = true
+
+show_agent_labels_on_pane_borders = true
+[theme]
+name = "vesper"
+
+auto_switch = false
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[ui.toast.herdr]
+position = "bottom-right"
+
+# Jump to next agent waiting on input, toast on screen or not.
+[[keys.command]]
+key = "prefix+shift+o"
+type = "shell"
+command = "/home/gabriel/.config/scripts/herdr-focus-blocked.sh"
+description = "focus next blocked agent"

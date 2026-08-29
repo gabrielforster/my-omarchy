@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# IoskeleyMonoTerm Nerd Font -- the ghostty font, and the only one of the set
+# that Arch does not package. The rest come from scripts/packages.
+set -euo pipefail
+
+DEST="$HOME/.local/share/fonts/IoskeleyMonoTerm"
+URL="https://github.com/ahatem/IoskeleyMono/releases/download/v2.0.0/IoskeleyMono-Term-NerdFont.zip"
+
+if [[ -d $DEST ]] && compgen -G "$DEST/*.ttf" >/dev/null; then
+  echo "IoskeleyMonoTerm already installed"
+  exit 0
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+# The release is ~120MB and the download truncates often enough to matter.
+curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o "$tmp/font.zip" "$URL"
+bsdtar -xf "$tmp/font.zip" -C "$tmp"
+
+# The archive carries Condensed/Normal/SemiCondensed; only Normal is wanted.
+mkdir -p "$DEST"
+find "$tmp" -path '*Normal*' -name '*.ttf' -exec cp {} "$DEST/" \;
+fc-cache -f
+
+# The family name fontconfig reports must match ghostty's font-family.
+fc-match "IoskeleyMonoTerm Nerd Font"

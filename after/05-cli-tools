@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# CLIs that are not packaged: installed from upstream scripts or cargo.
+set -euo pipefail
+
+export PATH="$HOME/.local/share/mise/shims:$HOME/.cargo/bin:$PATH"
+
+# ai-jail needs a rust toolchain -- after/mise provides it.
+if ! command -v ai-jail >/dev/null; then
+  cargo install ai-jail
+fi
+
+if ! command -v herdr >/dev/null; then
+  curl -fsSL https://herdr.dev/install.sh | sh
+fi
+
+if ! command -v tuicr >/dev/null; then
+  # The installer prompts on /dev/tty, which breaks when driven by a script.
+  TUICR_INSTALL_YES=1 sh -c "$(curl -fsSL tuicr.dev/install.sh)"
+fi

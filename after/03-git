@@ -17,13 +17,17 @@ git config --global branch.autoSetupMerge always
 # SSH commit signing instead of the GPG key from the old machine.
 # Reminder: the key has to be added to GitHub a SECOND time, as a Signing
 # Key -- an authentication key does not make commits show as Verified.
+# git expands a leading ~ in these two values, so they are stored literally
+# rather than as absolute paths -- the same config then works on any machine
+# and under any username. (master's .gitconfig in the dotfiles repo had
+# /home/gabrielrocha/ baked in, which is exactly the bug this avoids.)
 key="$HOME/.ssh/id_ed25519.pub"
 if [[ -f $key ]]; then
   git config --global gpg.format ssh
-  git config --global user.signingkey "$key"
+  git config --global user.signingkey "~/.ssh/id_ed25519.pub"
   git config --global commit.gpgsign true
   git config --global tag.gpgsign true
-  git config --global gpg.ssh.allowedSignersFile "$HOME/.config/git/allowed_signers"
+  git config --global gpg.ssh.allowedSignersFile "~/.config/git/allowed_signers"
   printf '%s %s\n' "$(git config --global user.email)" "$(cat "$key")" \
     > ~/.config/git/allowed_signers
 else

@@ -68,6 +68,19 @@ else
   grep '^HOOKS=' /etc/mkinitcpio.conf
 fi
 
+# Limine records a BLAKE2b hash of each boot file when it builds the images
+# (ENABLE_VERIFICATION=yes). Signing happens afterwards and CHANGES those files,
+# which invalidates the hashes and makes Limine warn on every boot -- and it
+# recurs on every kernel update, because mkinitcpio rebuilds before sbctl's hook
+# re-signs. Secure Boot verifies the UKI with the enrolled keys, so the BLAKE2b
+# check is redundant here. Turn it off before building.
+note "Disabling Limine's BLAKE2b verification (redundant under Secure Boot)"
+if grep -qE '^\s*ENABLE_VERIFICATION=' /etc/default/limine 2>/dev/null; then
+  sudo sed -i -E 's|^\s*ENABLE_VERIFICATION=.*|ENABLE_VERIFICATION=no|' /etc/default/limine
+else
+  echo 'ENABLE_VERIFICATION=no' | sudo tee -a /etc/default/limine >/dev/null
+fi
+
 note "Rebuilding the boot images"
 sudo limine-mkinitcpio
 
@@ -89,9 +102,36 @@ sudo sbctl enroll-keys -m
 note "Signing everything sbctl reports as unsigned"
 sudo sbctl verify | sed -nE 's|^✗ (/.+) is not signed$|sbctl sign -s "\1"|p' | sudo sh || true
 
+# Signing changed the files on the ESP, so regenerate limine.conf against them.
+note "Regenerating limine.conf against the signed files"
+sudo limine-update
+
 note "Final verification -- every entry below must be signed"
 sudo sbctl verify
 sudo sbctl status
+
+# Windows, if present, is usually on its own ESP that limine-entry-tool never
+# scans -- FIND_BOOTLOADERS only looks at $ESP_PATH. Point it out rather than
+# guessing the GUID.
+if efibootmgr 2>/dev/null | grep -q "Windows Boot Manager" && ! grep -q "^/Windows" /boot/limine.conf; then
+  # Read the ESP GUID out of the Windows EFI entry itself. Scanning for
+  # unmounted vfat partitions also matches USB installers, which is how you
+  # end up pointing the entry at a Ventoy stick.
+  win_guid=$(efibootmgr | grep "Windows Boot Manager" | grep -oP 'HD\(\d+,GPT,\K[0-9a-f-]+' | head -1)
+  cat <<MSG
+
+NOTE: Windows has an EFI entry but no entry in limine.conf, so it will not
+appear in the boot menu. Windows is on a separate ESP that limine-entry-tool
+does not scan. Add this to /boot/limine.conf (verify the GUID first with
+\`lsblk -o NAME,SIZE,FSTYPE,PARTUUID\`):
+
+/Windows
+comment: order-priority=20
+protocol: efi
+path: guid(${win_guid:-<windows-esp-partuuid>}):/EFI/Microsoft/Boot/bootmgfw.efi
+
+MSG
+fi
 
 cat <<'MSG'
 

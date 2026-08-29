@@ -192,7 +192,7 @@ in **Setup Mode**, which means clearing the UEFI keys from the BIOS by hand. The
 script reads `SetupMode` straight out of efivars and stops with vendor-specific
 instructions when it is not enabled, rather than failing halfway through.
 
-Two deviations from the guide, both deliberate:
+Three deviations from the guide, all deliberate:
 
 - The guide prints a full `HOOKS=` line to paste into `/etc/mkinitcpio.conf`.
   That line is the **udev** initramfs flavour (`udev`, `keymap`, `consolefont`);
@@ -204,6 +204,33 @@ Two deviations from the guide, both deliberate:
 - `enroll-keys` is always run with `-m`. This machine has a
   `Windows Boot Manager` EFI entry, and Windows' loader is signed by Microsoft —
   enrolling without `-m` drops Microsoft's keys and makes Windows unbootable.
+- Limine's own BLAKE2b verification (`ENABLE_VERIFICATION`) is turned off before
+  the images are built. Limine records a hash of each boot file when mkinitcpio
+  builds it, but sbctl signs those files *afterwards*, which changes them and
+  invalidates the hash — producing `Blake2b hash for URI ... does not match!` at
+  every boot, and recurring on every kernel update because the same race repeats.
+  Secure Boot already verifies the UKI against the enrolled keys, so the BLAKE2b
+  check is redundant. `limine-update` is re-run after signing regardless, so
+  limine.conf always reflects the files that are actually on the ESP.
+
+### Windows in the boot menu
+
+`FIND_BOOTLOADERS` only scans the Limine ESP. When Windows sits on its own ESP —
+often a different disk entirely — Limine cannot generate an entry for it and
+Windows silently vanishes from the menu. The script detects this and prints the
+entry to add, reading the GUID out of the Windows EFI boot entry rather than
+scanning for unmounted vfat partitions (that also matches USB installers):
+
+```
+/Windows
+comment: order-priority=20
+protocol: efi
+path: guid(<windows-esp-guid>):/EFI/Microsoft/Boot/bootmgfw.efi
+```
+
+Deliberately no `#hash` on that entry — the file belongs to Windows and changes
+on its update schedule. Secure Boot still validates it through the enrolled
+Microsoft keys. Re-add the entry if a future `limine-update` drops it.
 
 **Recovery:** if the machine will not boot after enabling Secure Boot, disable
 Secure Boot in the BIOS. Nothing the script does is destructive to the installed

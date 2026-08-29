@@ -120,6 +120,8 @@ note "Final verification -- every entry below must be signed"
 sudo sbctl verify
 sudo sbctl status
 
+# Beyond the scope of discussions/2296: that guide gets Windows booting under
+# Secure Boot (via enroll-keys -m) but not back into the Limine menu.
 # Windows, if present, is usually on its own ESP that limine-entry-tool never
 # scans -- FIND_BOOTLOADERS only looks at $ESP_PATH. Point it out rather than
 # guessing the GUID.

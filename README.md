@@ -221,6 +221,10 @@ Four deviations from the guide, all deliberate:
 
 ### Windows in the boot menu
 
+Not covered by [omarchy#2296][sb-guide]: the guide gets Windows *booting* under
+Secure Boot (via `enroll-keys -m`), but says nothing about getting it back into
+the Limine menu, which is a separate problem with a separate cause.
+
 `FIND_BOOTLOADERS` only scans the Limine ESP. When Windows sits on its own ESP —
 often a different disk entirely — Limine cannot generate an entry for it and
 Windows silently vanishes from the menu. The script detects this and prints the
@@ -245,6 +249,12 @@ turning Secure Boot off, so a retry does not mean redoing Setup Mode.
 
 ### Full sequence
 
+Adapted from [omarchy#2296 — Secure Boot with dual-boot Windows][sb-guide],
+which is the reference for this whole section. Its prerequisites are assumed
+here: a UEFI system with Secure Boot support, access to the BIOS setup, Omarchy
+installed with the Limine bootloader, and admin rights on **both** operating
+systems.
+
 The BIOS steps cannot be scripted. Wording is for a Gigabyte/AMI board.
 
 1. `sudo systemctl reboot --firmware-setup` — confirm CSM is **disabled**, set
@@ -268,6 +278,8 @@ The BIOS steps cannot be scripted. Wording is for a Gigabyte/AMI board.
 **Windows is never signed by this process.** It lives on its own ESP that is not
 mounted here, so `sbctl verify` only covers Limine and the Omarchy UKI under
 `/boot`. Windows keeps booting purely because `-m` put Microsoft's keys in `db`.
+
+[sb-guide]: https://github.com/omacom/omarchy/discussions/2296
 
 **Status on this machine:** completed. `bootctl` reports
 `Secure Boot: enabled (user)` — "user" meaning custom enrolled keys rather than

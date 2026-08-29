@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Omarchy shell plugins and bar layout.
+#
+# The bar, notifications and overlays all run in one Quickshell process
+# (omarchy-shell). shell.json hot-reloads on save, so no restart is needed.
+#
+# shell.json is NOT copied wholesale: it would freeze Omarchy's defaults for
+# everything else in the bar. Instead the personal widgets are spliced into
+# bar.layout.right with jq, leaving the rest of the file as Omarchy ships it.
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SHELL_JSON="$HOME/.config/omarchy/shell.json"
+PLUGIN_DIR="$HOME/.config/omarchy/plugins"
+
+# id -> git URL. `omarchy plugin add` derives the id from the manifest, so the
+# id here is only used to detect an existing install.
+PLUGINS=(
+  "io.github.thisisgm.omapods|https://github.com/thisisgm/omarchy-pods"
+  "network-devices.plugin|https://github.com/intrepid-developer/omarchy-network-devices.git"
+  "izeesoft.omarchy-phone|https://github.com/AdamMusa/omarchy-phone.git"
+  "techywilbur.pomodoro|https://github.com/techywilbur/omarchy-pomodoro.git"
+  "takitani.sysmetrics|https://github.com/alextakitani/omarchy-sysmetrics.git"
+  "cristianocorsi.countdown|https://github.com/CristianoCorsi/omarchy-countdown.git"
+  "io.github.kvm404.laser-pointer|https://github.com/kvm404/omarchy-laser-pointer.git"
+)
+
+echo "==> Installing shell plugins"
+for entry in "${PLUGINS[@]}"; do
+  id="${entry%%|*}"; url="${entry#*|}"
+  if [[ -d "$PLUGIN_DIR/$id" ]]; then
+    echo "  present  $id"
+  else
+    echo "  adding   $id"
+    # Placement is handled by the jq splice below, so do not --enable here.
+    omarchy plugin add "$url" --yes
+  fi
+done
+
+echo
+echo "==> Splicing the widgets into bar.layout.right"
+ids=$(printf '%s\n' "${PLUGINS[@]}" | cut -d'|' -f1 | jq -R . | jq -s .)
+entries=$(jq -n --argjson ids "$ids" '
+  $ids | map(
+    if . == "io.github.thisisgm.omapods"
+    then { id: ., hideWhenDisconnected: false }
+    else { id: . }
+    end)')
+
+tmp=$(mktemp)
+jq --argjson ids "$ids" --argjson entries "$entries" \
+   -f "$repo_dir/files/omarchy/bar-layout.jq" "$SHELL_JSON" > "$tmp"
+
+if diff -q <(jq -S . "$SHELL_JSON") <(jq -S . "$tmp") >/dev/null; then
+  echo "  already in the desired order"
+  rm -f "$tmp"
+else
+  cp "$SHELL_JSON" "$SHELL_JSON.omarchy-backup-$(date +%Y%m%d-%H%M%S)"
+  mv "$tmp" "$SHELL_JSON"
+  echo "  updated"
+fi
+
+echo
+echo "==> Resulting right section"
+jq -r '.bar.layout.right[].id' "$SHELL_JSON" | sed 's/^/  /'

@@ -14,8 +14,8 @@ here — see [What Omarchy already provides](#what-omarchy-already-provides).
 ## Layout
 
 - `scripts/` — base installers (packages, terminal, AUR, docker, shell). Run first.
-- `after/` — things that depend on `scripts/` (fonts, configs, git, runtimes, CLIs, Hyprland). Run after.
-- `files/` — config files deployed by `after/02-configs` and `after/06-hypr`.
+- `after/` — things that depend on `scripts/` (fonts, configs, git, runtimes, CLIs, Hyprland, shell plugins). Run after.
+- `files/` — config files deployed by `after/02-configs`, `after/06-hypr` and `after/07-plugins`.
 - `run` — orchestrator that iterates over `scripts/` then `after/`.
 
 Both directories are numbered because `run` executes in sorted order and some
@@ -274,6 +274,42 @@ mounted here, so `sbctl verify` only covers Limine and the Omarchy UKI under
 vendor defaults — with `SecureBoot=1`, `SetupMode=0`, and the Windows entry
 intact.
 
+## Shell plugins and the bar
+
+The bar, notifications and overlays all run inside one Quickshell process
+(`omarchy-shell`). `~/.config/omarchy/shell.json` hot-reloads on save, so
+layout changes need no restart.
+
+`after/07-plugins` installs these third-party widgets and places them in the
+bar's right section:
+
+| Plugin | Source |
+|---|---|
+| `takitani.sysmetrics` | [alextakitani/omarchy-sysmetrics](https://github.com/alextakitani/omarchy-sysmetrics) |
+| `network-devices.plugin` | [intrepid-developer/omarchy-network-devices](https://github.com/intrepid-developer/omarchy-network-devices) |
+| `techywilbur.pomodoro` | [techywilbur/omarchy-pomodoro](https://github.com/techywilbur/omarchy-pomodoro) |
+| `io.github.thisisgm.omapods` | [thisisgm/omarchy-pods](https://github.com/thisisgm/omarchy-pods) |
+| `izeesoft.omarchy-phone` | [AdamMusa/omarchy-phone](https://github.com/AdamMusa/omarchy-phone) |
+| `cristianocorsi.countdown` | [CristianoCorsi/omarchy-countdown](https://github.com/CristianoCorsi/omarchy-countdown) |
+| `io.github.kvm404.laser-pointer` | [kvm404/omarchy-laser-pointer](https://github.com/kvm404/omarchy-laser-pointer) |
+
+`sysmetrics` is what covers the CPU, RAM and disk readouts the old i3
+`i3status` bar had; `omarchy.audio` and `omarchy.clock` cover its volume and
+date/time. So bar parity with i3 comes from stock widgets plus that one plugin.
+
+**shell.json is not copied wholesale.** Doing so would freeze Omarchy's
+defaults for every other part of the bar — the same trap as the ghostty config,
+but worse, since Omarchy adds bar widgets between releases. Instead
+`files/omarchy/bar-layout.jq` splices the personal widgets in after
+`omarchy.tray` and moves `omarchy.monitor` to the end, leaving the rest of the
+file exactly as Omarchy ships it. It strips any existing copies first, so
+re-running is a no-op — verified both ways: applied to the stock default it
+reproduces this layout exactly, and applied to an already-configured file it
+changes nothing.
+
+Plugins are installed with `omarchy plugin add <url> --yes`, deliberately
+without `--enable`, because placement is the jq step's job.
+
 ## TODO
 
-- Omarchy plugin setup (`omarchy plugin clone`, bar widgets, `shell.json`).
+- Nothing outstanding.

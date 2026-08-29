@@ -20,9 +20,6 @@ note() { echo; echo "==> $*"; }
 
 [[ -d /sys/firmware/efi ]] || die "not booted in UEFI mode -- Secure Boot is not applicable"
 
-note "Installing sbctl"
-omarchy pkg add sbctl
-
 # --- Setup Mode gate ------------------------------------------------------
 # Read straight from efivars so this works before sbctl is configured. The
 # variable is 4 bytes of attributes followed by the value.
@@ -41,12 +38,20 @@ Do this first, then re-run:
      - Leave Secure Boot itself DISABLED for now; it gets enabled at the end.
   3. Save and reboot back into Omarchy.
 
-Verify with:  sudo sbctl status   (wants "Setup Mode: Enabled")
+Verify with (sbctl is not installed yet, so read efivars directly):
+  od -An -tu1 /sys/firmware/efi/efivars/SetupMode-* | awk '{print $NF}'
+1 means Setup Mode is enabled and this script can proceed; 0 means it is not.
+
+Re-running this script is itself a safe check -- it does nothing until Setup
+Mode is enabled.
 MSG
   exit 1
 fi
 
 note "Setup Mode confirmed"
+
+note "Installing sbctl"
+omarchy pkg add sbctl
 sudo sbctl status
 
 # --- btrfs-overlayfs hook -------------------------------------------------

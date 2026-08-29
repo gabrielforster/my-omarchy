@@ -207,7 +207,39 @@ Two deviations from the guide, both deliberate:
 
 **Recovery:** if the machine will not boot after enabling Secure Boot, disable
 Secure Boot in the BIOS. Nothing the script does is destructive to the installed
-system. Know how to reach your BIOS before starting.
+system. Know how to reach your BIOS before starting. The enrolled keys survive
+turning Secure Boot off, so a retry does not mean redoing Setup Mode.
+
+### Full sequence
+
+The BIOS steps cannot be scripted. Wording is for a Gigabyte/AMI board.
+
+1. `sudo systemctl reboot --firmware-setup` — confirm CSM is **disabled**, set
+   Secure Boot Mode to **Custom**, then Key Management → **Clear Secure Boot
+   Keys**. Leave Secure Boot itself **off**. Save.
+2. `sudo sbctl status` — must read `Setup Mode: Enabled`.
+3. `./secureboot` — installs sbctl, patches HOOKS, rebuilds boot images,
+   creates and enrolls keys, signs everything. `sbctl verify` must end with **no
+   `✗` lines**; stop and fix before continuing if any appear.
+4. `sudo systemctl reboot` — then `sudo sbctl status` must read
+   `Setup Mode: Disabled`. Some firmware (this board included) does not clear
+   the Setup Mode variable until a reboot, so it can still read `Enabled`
+   immediately after enrolling even though the keys took. This split reboot
+   separates "the firmware accepted the keys" from "it boots with enforcement
+   on".
+5. `sudo systemctl reboot --firmware-setup` — set Secure Boot **Enabled**, leave
+   the mode on Custom. Do **not** touch "Restore Factory Keys"; that wipes the
+   enrolled keys.
+6. Verify `sbctl status` shows `Secure Boot: ✓ Enabled`, then boot Windows once.
+
+**Windows is never signed by this process.** It lives on its own ESP that is not
+mounted here, so `sbctl verify` only covers Limine and the Omarchy UKI under
+`/boot`. Windows keeps booting purely because `-m` put Microsoft's keys in `db`.
+
+**Status on this machine:** completed. `bootctl` reports
+`Secure Boot: enabled (user)` — "user" meaning custom enrolled keys rather than
+vendor defaults — with `SecureBoot=1`, `SetupMode=0`, and the Windows entry
+intact.
 
 ## TODO
 

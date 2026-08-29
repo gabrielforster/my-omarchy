@@ -178,6 +178,37 @@ checking that option suggests nothing is transparent. `files/hypr/looknfeel.snip
 re-applies the rule as `"1.0 1.0"` to turn it off. `SUPER+BACKSPACE` toggles it
 per window without any config change.
 
+## Secure Boot
+
+`./secureboot` sets up Secure Boot with custom keys while keeping the Windows
+dual-boot working, following
+[omarchy#2296](https://github.com/omacom/omarchy/discussions/2296).
+
+It is **not** part of `./run` — `run` only walks `scripts/` and `after/`, and
+this lives at the repo root so a full run can never trigger it by accident.
+
+It cannot finish in one pass. Enrolling custom keys requires the firmware to be
+in **Setup Mode**, which means clearing the UEFI keys from the BIOS by hand. The
+script reads `SetupMode` straight out of efivars and stops with vendor-specific
+instructions when it is not enabled, rather than failing halfway through.
+
+Two deviations from the guide, both deliberate:
+
+- The guide prints a full `HOOKS=` line to paste into `/etc/mkinitcpio.conf`.
+  That line is the **udev** initramfs flavour (`udev`, `keymap`, `consolefont`);
+  this machine runs the **systemd** flavour (`systemd`, `sd-vconsole`). Pasting
+  it verbatim swaps the initramfs init system and risks an unbootable system for
+  reasons that have nothing to do with Secure Boot. The script appends only
+  `btrfs-overlayfs` to whatever `HOOKS=` line is already there, and backs the
+  file up first.
+- `enroll-keys` is always run with `-m`. This machine has a
+  `Windows Boot Manager` EFI entry, and Windows' loader is signed by Microsoft —
+  enrolling without `-m` drops Microsoft's keys and makes Windows unbootable.
+
+**Recovery:** if the machine will not boot after enabling Secure Boot, disable
+Secure Boot in the BIOS. Nothing the script does is destructive to the installed
+system. Know how to reach your BIOS before starting.
+
 ## TODO
 
 - Omarchy plugin setup (`omarchy plugin clone`, bar widgets, `shell.json`).

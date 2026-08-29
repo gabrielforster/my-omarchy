@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+#
+# Secure Boot with custom keys, keeping Windows dual-boot working.
+# Follows https://github.com/omacom/omarchy/discussions/2296
+#
+# NOT part of `./run` on purpose -- it lives at the repo root, and `run` only
+# walks scripts/ and after/. Run it deliberately:  ./secureboot
+#
+# It cannot be completed in one pass. Enrolling keys requires the firmware to
+# be in Setup Mode, which means clearing the UEFI keys from the BIOS by hand.
+# The script stops and tells you when that is the missing piece.
+#
+# BEFORE STARTING, know how to disable Secure Boot in your BIOS. If a signed
+# file is missed, the machine will not boot, and turning Secure Boot back off
+# is the recovery path.
+set -euo pipefail
+
+die()  { echo "ERROR: $*" >&2; exit 1; }
+note() { echo; echo "==> $*"; }
+
+[[ -d /sys/firmware/efi ]] || die "not booted in UEFI mode -- Secure Boot is not applicable"
+
+note "Installing sbctl"
+omarchy pkg add sbctl
+
+# --- Setup Mode gate ------------------------------------------------------
+# Read straight from efivars so this works before sbctl is configured. The
+# variable is 4 bytes of attributes followed by the value.
+setup_mode=$(od -An -tu1 /sys/firmware/efi/efivars/SetupMode-* 2>/dev/null | awk '{print $NF}' | head -1)
+if [[ $setup_mode != "1" ]]; then
+  cat >&2 <<'MSG'
+
+Setup Mode is NOT enabled, so custom keys cannot be enrolled yet.
+
+Do this first, then re-run:
+  1. sudo systemctl reboot --firmware-setup
+  2. In the BIOS: Security -> Secure Boot -> Key Management
+     - Set Secure Boot to "Custom" / "Setup Mode", or choose
+       "Clear Secure Boot Keys" / "Delete All Keys" / "Erase all Secure Boot
+       Settings" -- the wording differs by vendor (this board is AMI).
+     - Leave Secure Boot itself DISABLED for now; it gets enabled at the end.
+  3. Save and reboot back into Omarchy.
+
+Verify with:  sudo sbctl status   (wants "Setup Mode: Enabled")
+MSG
+  exit 1
+fi
+
+note "Setup Mode confirmed"
+sudo sbctl status
+
+# --- btrfs-overlayfs hook -------------------------------------------------
+# The guide prints a whole HOOKS= line, but that line is the *udev* initramfs
+# flavour. Omarchy here uses the *systemd* flavour (systemd, sd-vconsole).
+# Swapping flavours wholesale can produce an unbootable initramfs, so only
+# append the one hook that is actually being added.
+if grep -q '^HOOKS=.*btrfs-overlayfs' /etc/mkinitcpio.conf; then
+  echo "btrfs-overlayfs hook already present"
+else
+  note "Adding the btrfs-overlayfs hook to /etc/mkinitcpio.conf"
+  sudo cp /etc/mkinitcpio.conf "/etc/mkinitcpio.conf.bak.$(date +%Y%m%d-%H%M%S)"
+  sudo sed -i -E 's/^(HOOKS=\(.*)\)$/\1 btrfs-overlayfs)/' /etc/mkinitcpio.conf
+  grep '^HOOKS=' /etc/mkinitcpio.conf
+fi
+
+note "Rebuilding the boot images"
+sudo limine-mkinitcpio
+
+# --- keys -----------------------------------------------------------------
+if sudo sbctl list-keys &>/dev/null && [[ -n $(sudo sbctl list-keys 2>/dev/null) ]]; then
+  echo "sbctl keys already exist -- skipping create-keys"
+else
+  note "Creating custom keys"
+  sudo sbctl create-keys
+fi
+
+# -m keeps Microsoft's keys alongside the custom ones. This machine dual-boots
+# Windows (an EFI entry for Windows Boot Manager exists), and Windows' loader
+# is signed by Microsoft -- enrolling without -m makes Windows unbootable.
+note "Enrolling keys (Microsoft keys included, for Windows)"
+sudo sbctl enroll-keys -m
+
+# --- signing --------------------------------------------------------------
+note "Signing everything sbctl reports as unsigned"
+sudo sbctl verify | sed -nE 's|^✗ (/.+) is not signed$|sbctl sign -s "\1"|p' | sudo sh || true
+
+note "Final verification -- every entry below must be signed"
+sudo sbctl verify
+sudo sbctl status
+
+cat <<'MSG'
+
+Done, except for the firmware step.
+
+  sudo systemctl reboot --firmware-setup
+
+Enable Secure Boot in the BIOS, save, and boot back in. Confirm with:
+
+  sudo sbctl status      # Secure Boot: Enabled
+  bootctl status | grep -i "secure boot"
+
+If the machine will not boot, go back into the BIOS and disable Secure Boot.
+That restores the previous behaviour; nothing here is destructive to the
+installed system.
+MSG

@@ -8,6 +8,5 @@ if o.cmd_present("discord") then
   o.launch_on_start("discord")
 end
 
-if o.cmd_present("spotify") then
-  o.launch_on_start("spotify")
-end
+-- The Spotify desktop client is replaced by the quickshell.spotify bar widget
+-- (see after/07-plugins), so there is nothing to autostart.

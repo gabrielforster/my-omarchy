@@ -8,6 +8,7 @@ omarchy pkg add \
   glow git-delta uv pnpm aws-cli-v2 \
   cmake ninja gettext base-devel unzip wl-clipboard \
   ttf-ubuntu-nerd ttf-ubuntu-mono-nerd ttf-firacode-nerd otf-firamono-nerd ttf-adwaitamono-nerd \
+  networkmanager-openvpn \
   dbeaver discord obs-studio
 
 # Already shipped by Omarchy, listed so the intent is on record:

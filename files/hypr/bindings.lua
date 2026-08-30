@@ -96,10 +96,18 @@ o.bind("SUPER + E", "Toggle window split", hl.dsp.layout("togglesplit"))
 
 -- i3: `$mod+h` / `$mod+v` set the split direction for the NEXT window.
 -- Hyprland's dwindle calls this "preselect": h -> new window to the right,
--- v -> new window below. SUPER + H/V are Omarchy's universal cut/paste, so
--- these sit on SHIFT.
+-- v -> new window below. SUPER + SHIFT + V went to the clipboard history
+-- (below), so the vertical preselect takes bare SUPER + V, replacing
+-- Omarchy's universal paste there (CTRL + V still pastes everywhere).
+-- The horizontal one stays on SHIFT for now; bare SUPER + H is free if the
+-- pair should ever be symmetric again.
 o.bind("SUPER + SHIFT + H", "Split horizontal (next window right)", hl.dsp.layout("preselect r"))
-o.bind("SUPER + SHIFT + V", "Split vertical (next window below)", hl.dsp.layout("preselect d"))
+hl.unbind("SUPER + V")
+o.bind("SUPER + V", "Split vertical (next window below)", hl.dsp.layout("preselect d"))
+
+-- Clipboard history on SUPER + SHIFT + V. Omarchy binds this to
+-- SUPER + CTRL + V by default; that binding is left in place as well.
+o.bind("SUPER + SHIFT + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
 
 
 -- ---------------------------------------------------------------------------

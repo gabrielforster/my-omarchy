@@ -21,7 +21,6 @@ PLUGINS=(
   "izeesoft.omarchy-phone|https://github.com/AdamMusa/omarchy-phone.git"
   "techywilbur.pomodoro|https://github.com/techywilbur/omarchy-pomodoro.git"
   "takitani.sysmetrics|https://github.com/alextakitani/omarchy-sysmetrics.git"
-  "cristianocorsi.countdown|https://github.com/CristianoCorsi/omarchy-countdown.git"
   "io.github.kvm404.laser-pointer|https://github.com/kvm404/omarchy-laser-pointer.git"
   "dimitar.openvpn|https://github.com/dstankovd/omarchy-openvpn.git"
   "io.github.cbayschm74.laptop-power-center|https://github.com/cbayschm74/omarchy-laptop-power-center.git"

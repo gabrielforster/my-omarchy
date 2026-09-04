@@ -2,7 +2,7 @@
 # CLIs that are not packaged: installed from upstream scripts or cargo.
 set -euo pipefail
 
-export PATH="$HOME/.local/share/mise/shims:$HOME/.cargo/bin:$PATH"
+export PATH="$HOME/.local/share/mise/shims:$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
 # ai-jail needs a rust toolchain -- after/mise provides it.
 if ! command -v ai-jail >/dev/null; then
@@ -11,6 +11,16 @@ fi
 
 if ! command -v herdr >/dev/null; then
   curl -fsSL https://herdr.dev/install.sh | sh
+fi
+
+# Without this hook Claude never reports its session id to herdr, so
+# [session] resume_agents_on_restore has nothing to resume: a server restart
+# brings back the pane layout as bare shells. Writes
+# ~/.claude/hooks/herdr-agent-state.sh and a SessionStart hook in
+# ~/.claude/settings.json. Idempotent; re-run after a herdr update to refresh
+# the hook version.
+if command -v herdr >/dev/null; then
+  herdr integration install claude
 fi
 
 if ! command -v tuicr >/dev/null; then

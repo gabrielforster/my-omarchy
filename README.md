@@ -157,6 +157,16 @@ exactly this reason, guarded so re-running does not duplicate the block.
 **Everything replaced is backed up** as `<name>.omarchy-backup-<timestamp>`
 next to the original.
 
+**The herdr Claude integration lives outside this repo.** `after/05-cli-tools`
+runs `herdr integration install claude`, which writes
+`~/.claude/hooks/herdr-agent-state.sh` and registers it as a `SessionStart`
+hook in `~/.claude/settings.json` — neither file is tracked here. The hook
+reports Claude's session id to herdr; without it `[session]
+resume_agents_on_restore` has nothing to resume and a server restart brings the
+pane layout back as bare shells. Re-run `after/05-cli-tools` (or
+`herdr integration install claude`) after a herdr update to refresh the hook
+version; `herdr integration status` shows whether it is current.
+
 ## Scripts in `files/scripts/`
 
 Deployed to `~/.config/scripts/`.

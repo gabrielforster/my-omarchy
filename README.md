@@ -14,8 +14,8 @@ here — see [What Omarchy already provides](#what-omarchy-already-provides).
 ## Layout
 
 - `scripts/` — base installers (packages, terminal, AUR, docker, shell). Run first.
-- `after/` — things that depend on `scripts/` (fonts, configs, git, runtimes, CLIs, Hyprland, shell plugins). Run after.
-- `files/` — config files deployed by `after/02-configs`, `after/06-hypr` and `after/07-plugins`.
+- `after/` — things that depend on `scripts/` (fonts, configs, git, runtimes, CLIs, Hyprland, shell plugins, themes). Run after.
+- `files/` — config files deployed by `after/02-configs`, `after/06-hypr`, `after/07-plugins` and `after/08-themes`.
 - `run` — orchestrator that iterates over `scripts/` then `after/`.
 
 Both directories are numbered because `run` executes in sorted order and some
@@ -100,6 +100,7 @@ Where my setup and Omarchy's disagreed, and which won.
 | herdr | **my config** over Omarchy's | Consistency with the tmux choice — mine is `ctrl+b`, Omarchy's mirrors its own `ctrl+space` tmux. |
 | starship | **my config** | `STARSHIP_CONFIG` points at `~/.config/zsh/starship.toml`, so zsh uses mine and Omarchy's bash keeps `~/.config/starship.toml`. No conflict. |
 | ghostty theme | **Omarchy's dynamic theme** over my static Vesper | Terminal follows `omarchy theme set`. My font/padding/decoration settings layered on top. |
+| System theme | **Dark Winden**, mine, over Omarchy's stock set | A theme is just `colors.toml` in `~/.config/omarchy/themes/`; everything themable follows from it. See [Themes](#themes). |
 | Commit signing | **SSH** over GPG | The GPG private key is not on this machine, and the SSH key already exists for auth. |
 | Global node | **Omarchy's 26.7.0** | Omarchy's `claude`/`codex` run through mise. My versions are installed and selected per-project. |
 
@@ -295,6 +296,65 @@ mounted here, so `sbctl verify` only covers Limine and the Omarchy UKI under
 `Secure Boot: enabled (user)` — "user" meaning custom enrolled keys rather than
 vendor defaults — with `SecureBoot=1`, `SetupMode=0`, and the Windows entry
 intact.
+
+## Themes
+
+`after/08-themes` installs two themes of my own, **Dark Winden** and **Dark
+Winden Light**, after the Netflix series *Dark*. Rain-soaked slate and cave-lamp
+teal, sodium-lamp yellow for warmth, rust instead of a bright red.
+
+| | Dark Winden | Dark Winden Light |
+|---|---|---|
+| background | `#0d1619` | `#eff1ee` |
+| foreground | `#c3d2d3` | `#263437` |
+| accent | `#6fb3b8` | `#2f6d75` |
+| icons | Yaru-prussiangreen-dark | Yaru-prussiangreen |
+
+**A theme is two files.** `colors.toml` and `icons.theme` are the entire theme;
+Omarchy's templates in `/usr/share/omarchy/default/themed/*.tpl` generate
+Alacritty, foot, kitty, ghostty, Neovim (via `aether.nvim`), btop, helix,
+VS Code, Chromium, Obsidian, the bar, the lock screen and the polkit prompt
+from them at `omarchy theme set` time. So shipping a theme means shipping
+colours, not twenty app configs — the opposite of the ghostty/tmux snapshots
+elsewhere in this repo, and the reason this one has no re-merge caveat.
+
+Slugs are title-cased into display names, so the directory `dark-winden`
+becomes the theme `Dark Winden`.
+
+### The backgrounds are drawn, not downloaded
+
+`files/omarchy/wallpapers.py` renders all eight — three scenes per theme plus
+the flat `omarchy.*` one — as SVG, rasterises them at 4K with `rsvg-convert`
+and encodes to JPEG. It runs at *authoring* time, never at install: the output
+is committed and `after/08-themes` only copies it. Editing the palette at the
+bottom of that file and re-running regenerates everything deterministically.
+
+| Background | Scene |
+|---|---|
+| `1-the-passage` | the cave tunnel receding to the light, with a figure at its throat |
+| `2-sic-mundus` | the triquetra, *SIC MVNDVS CREATVS EST* / *DER ANFANG IST DAS ENDE* |
+| `3-winden-plant` | the cooling towers behind the pines — moon and rain in the dark theme, bleached fog in the light one |
+
+JPEG at q92 with no chroma subsampling, not PNG: 1.8 MB against 13 MB, ~51 dB
+PSNR, and no visible banding in the dark gradients even amplified 5x. In a repo
+that is otherwise 640 KB of text, the PNGs would have been twenty times
+everything else. `omarchy.png` stays PNG because it is flat colour and 30 KB.
+
+### Re-running
+
+The theme directories are owned by this repo and replaced outright, and
+`backgrounds/` is wiped and recopied rather than merged, so a removed wallpaper
+actually disappears. **Extra wallpapers of your own go in
+`~/.config/omarchy/backgrounds/<slug>/`**, which Omarchy reads for any theme and
+this script never touches.
+
+The active theme is only changed when it needs to be:
+
+| Current theme | What happens |
+|---|---|
+| One of these two | Re-applied, so a colour edit takes effect |
+| Anything else, themes not yet installed | `Dark Winden` is applied — the fresh-install path |
+| Anything else, themes already installed | Left alone; `OMARCHY_THEME_APPLY=1` forces it |
 
 ## Shell plugins and the bar
 

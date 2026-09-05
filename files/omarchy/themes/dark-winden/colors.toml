@@ -1,0 +1,33 @@
+# Dark Winden — after the Netflix series "Dark".
+# Rain-soaked slate and cave-lamp teal, with sodium-lamp yellow for warmth.
+mode = "dark"
+
+accent = "#6fb3b8"
+selection = "#24383d"
+muted = "#4a6067"
+
+background = "#0d1619"
+dark_background = "#0a1114"
+darker_background = "#060b0d"
+lighter_background = "#17262b"
+
+foreground = "#c3d2d3"
+dark_foreground = "#63797e"
+light_foreground = "#a9bcbe"
+bright_foreground = "#e4efef"
+
+red = "#bb6259"
+yellow = "#d3a558"
+orange = "#c8804d"
+green = "#7f9e6d"
+cyan = "#6fb3b8"
+blue = "#5e91a8"
+magenta = "#9a7ba3"
+brown = "#6d5644"
+
+bright_red = "#d4776d"
+bright_yellow = "#e6bb6d"
+bright_green = "#94b381"
+bright_cyan = "#86ccd0"
+bright_blue = "#74a8bf"
+bright_magenta = "#b18fba"

@@ -1,0 +1,33 @@
+# Dark Winden Light — the bleached, overexposed daylight of the series.
+# Bone-white fog over slate, with the same deep cave teal as the accent.
+mode = "light"
+
+accent = "#2f6d75"
+selection = "#ccd6d5"
+muted = "#96a3a3"
+
+background = "#eff1ee"
+dark_background = "#e3e6e2"
+darker_background = "#d5d9d5"
+lighter_background = "#dde2df"
+
+foreground = "#263437"
+dark_foreground = "#7c8a8b"
+light_foreground = "#3d4c4f"
+bright_foreground = "#111d20"
+
+red = "#a2453c"
+yellow = "#95702a"
+orange = "#a35c2b"
+green = "#4e7340"
+cyan = "#2f6d75"
+blue = "#37637a"
+magenta = "#6d4d78"
+brown = "#6b5440"
+
+bright_red = "#b6544a"
+bright_yellow = "#a67f33"
+bright_green = "#5c8449"
+bright_cyan = "#2f6d75"
+bright_blue = "#42738c"
+bright_magenta = "#7c5989"

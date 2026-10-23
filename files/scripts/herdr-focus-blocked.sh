@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Focus the next herdr agent that is blocked waiting on input.
+# Focus the next herdr agent waiting on input: blocked on an approval/question
+# dialog, or done with an unseen completion (herdr >= 0.9 reports that as
+# "done"; focusing marks it seen, so it drops out of the cycle afterwards).
 # Bound to prefix+shift+o in ~/.config/herdr/config.toml.
 #
 # Unlike open_notification_target (prefix+o), this works whether or not a
@@ -12,11 +14,12 @@ resp=$(herdr agent list 2>/dev/null) || exit 0
 # `herdr agent list` emits {"id":..,"error":{..}} when the server is down.
 jq -e 'has("result")' >/dev/null 2>&1 <<<"$resp" || exit 0
 
-# Every blocked agent, in a stable order so the cycle is predictable.
+# Every waiting agent, blocked ones first, in a stable order so the cycle is
+# predictable.
 mapfile -t blocked < <(
     jq -r '.result.agents
-           | map(select(.agent_status == "blocked"))
-           | sort_by(.workspace_id, .pane_id)
+           | map(select(.agent_status == "blocked" or .agent_status == "done"))
+           | sort_by(.agent_status != "blocked", .workspace_id, .pane_id)
            | .[].pane_id' <<<"$resp"
 )
 (( ${#blocked[@]} )) || exit 0

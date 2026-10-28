@@ -82,8 +82,9 @@ Wayland-native, themed, and updated with the system.
 | neovim built from source | packaged `neovim` is current (0.12.5, the latest stable tag). On Ubuntu the source build existed because apt's was ancient; that reason does not apply here. |
 | `xclip` | `wl-clipboard` (`wl-copy` / `wl-paste`) |
 
-Only **IoskeleyMonoTerm** still needs a manual download (`after/01-fonts`) —
-it is the ghostty font and is not in any repo.
+Only fonts that are not in any repo are downloaded, by `after/01-fonts`:
+**IoskeleyMonoTerm** (the ghostty font) and whatever Nerd Fonts are listed in
+its `NERD_FONTS` array.
 
 ## Decisions
 

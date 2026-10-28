@@ -1,27 +1,67 @@
 #!/usr/bin/env bash
-# IoskeleyMonoTerm Nerd Font -- the ghostty font, and the only one of the set
-# that Arch does not package. The rest come from scripts/packages.
+# Fonts that Arch does not package. The packaged ones come from
+# scripts/01-packages -- prefer that whenever a ttf-*-nerd package exists.
 set -euo pipefail
 
-DEST="$HOME/.local/share/fonts/IoskeleyMonoTerm"
-URL="https://github.com/ahatem/IoskeleyMono/releases/download/v2.0.0/IoskeleyMono-Term-NerdFont.zip"
+FONT_DIR="$HOME/.local/share/fonts"
 
-if [[ -d $DEST ]] && compgen -G "$DEST/*.ttf" >/dev/null; then
-  echo "IoskeleyMonoTerm already installed"
-  exit 0
-fi
+# Nerd Fonts by release asset name, as listed at
+# https://github.com/ryanoasis/nerd-fonts/releases (e.g. Hack, Meslo, Iosevka).
+NERD_FONTS=(
+  Hack
+  Iosevka
+  FiraCode
+  FiraMono
+  JetBrainsMono
+  Mononoki
+  UbuntuMono
+)
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+installed=0
 
-# The release is ~120MB and the download truncates often enough to matter.
-curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o "$tmp/font.zip" "$URL"
-bsdtar -xf "$tmp/font.zip" -C "$tmp"
+has_fonts() {
+  compgen -G "$1/*.[ot]tf" >/dev/null
+}
 
-# The archive carries Condensed/Normal/SemiCondensed; only Normal is wanted.
-mkdir -p "$DEST"
-find "$tmp" -path '*Normal*' -name '*.ttf' -exec cp {} "$DEST/" \;
-fc-cache -f
+# The releases are large and the download truncates often enough to matter.
+fetch() {
+  curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o "$2" "$1"
+}
+
+for font in "${NERD_FONTS[@]}"; do
+  dest="$FONT_DIR/$font"
+  if has_fonts "$dest"; then
+    echo "$font Nerd Font already installed"
+    continue
+  fi
+
+  work="$tmp/$font"
+  mkdir -p "$work" "$dest"
+  fetch "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/$font.tar.xz" "$work/font.tar.xz"
+  bsdtar -xf "$work/font.tar.xz" -C "$work"
+  find "$work" \( -name '*.ttf' -o -name '*.otf' \) -exec cp {} "$dest/" \;
+  installed=1
+done
+
+# IoskeleyMonoTerm Nerd Font -- the ghostty font. Not a ryanoasis release.
+dest="$FONT_DIR/IoskeleyMonoTerm"
+if has_fonts "$dest"; then
+  echo "IoskeleyMonoTerm already installed"
+else
+  work="$tmp/IoskeleyMonoTerm"
+  mkdir -p "$work" "$dest"
+  fetch "https://github.com/ahatem/IoskeleyMono/releases/download/v2.0.0/IoskeleyMono-Term-NerdFont.zip" "$work/font.zip"
+  bsdtar -xf "$work/font.zip" -C "$work"
+  # The archive carries Condensed/Normal/SemiCondensed; only Normal is wanted.
+  find "$work" -path '*Normal*' -name '*.ttf' -exec cp {} "$dest/" \;
+  installed=1
+fi
+
+if ((installed)); then
+  fc-cache -f
+fi
 
 # The family name fontconfig reports must match ghostty's font-family.
 fc-match "IoskeleyMonoTerm Nerd Font"

@@ -97,6 +97,7 @@ Where my setup and Omarchy's disagreed, and which won.
 | Runtimes | **mise** over my asdf | Already installed and driving Omarchy's own tooling. asdf-compatible (reads `.tool-versions`). Running both would mean two sets of shims fighting over `PATH`. |
 | Neovim | **my config**, Omarchy's **binary** | `~/.config/nvim` is my repo; the packaged nvim stays and updates with the system. |
 | Launcher / notifications / screenshots | **Omarchy's** | Wayland-native and themed. rofi/dunst/flameshot are X11 and behave badly under Hyprland. |
+| Screenshot saving | **Omasnap with autosave off** | Since 4.5 every capture is written to `~/Pictures/Screenshots` as well as copied. `files/omasnap/omasnap.conf` turns that off: captures go to the clipboard and preview only, and Save keeps one. |
 | tmux | **my config** over Omarchy's | Trade-off taken knowingly: loses theme-following colours and the `omarchy menu tmux-keybindings` popup, keeps my prefix and bindings. |
 | herdr | **my config** over Omarchy's | Consistency with the tmux choice — mine is `ctrl+b`, Omarchy's mirrors its own `ctrl+space` tmux. |
 | starship | **my config** | `STARSHIP_CONFIG` points at `~/.config/zsh/starship.toml`, so zsh uses mine and Omarchy's bash keeps `~/.config/starship.toml`. No conflict. |

@@ -47,6 +47,11 @@ backup ~/.config/herdr/config.toml
 install -Dm644 "$repo_dir/files/herdr/config.toml" ~/.config/herdr/config.toml
 sed -i "s|/home/[^/]*/\.config/scripts|$HOME/.config/scripts|g" ~/.config/herdr/config.toml
 
+# --- omasnap (screenshots) ------------------------------------------------
+# Omarchy ships no omasnap.conf, so this only adds one: autosave off.
+backup ~/.config/omasnap/omasnap.conf
+install -Dm644 "$repo_dir/files/omasnap/omasnap.conf" ~/.config/omasnap/omasnap.conf
+
 # --- helper scripts --------------------------------------------------------
 mkdir -p ~/.config/scripts
 install -m755 "$repo_dir"/files/scripts/*.sh ~/.config/scripts/

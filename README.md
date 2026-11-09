@@ -110,8 +110,18 @@ Where my setup and Omarchy's disagreed, and which won.
 `files/hypr/bindings.lua` carries this mapping with the reasoning inline. Summary:
 
 **Already identical — nothing bound.** `SUPER+Return`, `SUPER+F` (fullscreen),
-`SUPER+arrows` (focus), `SUPER+Shift+arrows` (move), `SUPER+1..0` and
-`SUPER+Shift+1..0` (workspaces), and every `XF86` media/brightness key.
+`SUPER+arrows` (focus), `SUPER+Shift+arrows` (move), and every `XF86`
+media/brightness key.
+
+**Shared workspaces, not per monitor.** Omarchy 4.5 gave every monitor its own
+workspaces 1-10 (each monitor owns a block of ids: laptop 1-10, external
+11-20, …) with no switch to turn it off. `files/hypr/workspaces.lua` puts back
+the i3 behaviour: `SUPER+1..0` / `SUPER+Shift+1..0` address one global set of
+workspaces, `SUPER+Tab` / `SUPER+scroll` walk every workspace (`e+1`), and the
+module's per-monitor renumbering is replaced by one that folds any workspace
+past 10 (leftovers like the external monitor's 11-20) back into 1-10. It replaces `o.workspaces.*` in place,
+so the bar's workspace widget follows along. Remove `require("hypr.workspaces")`
+from `~/.config/hypr/hyprland.lua` to go back to per-monitor workspaces.
 
 **Rebound, displacing an Omarchy default:**
 
@@ -120,15 +130,19 @@ Where my setup and Omarchy's disagreed, and which won.
 | `SUPER+SPACE` | focus tiling/floating toggle | Omarchy menu → moved to `SUPER+D` |
 | `SUPER+D` | Omarchy menu | *(was unbound)* |
 | `SUPER+P` | screenshot region | Pseudo window → **dropped** |
+| `SUPER+Shift+P` | OCR region to clipboard | Google Photos webapp → **dropped** |
 | `SUPER+Shift+SPACE` | float toggle | toggle top bar → moved to `SUPER+T` |
 | `SUPER+T` | toggle top bar | float toggle → moved to `SUPER+Shift+SPACE` |
 | `SUPER+Shift+C` / `+R` | reload config | Calendar webapp → **dropped** |
 | `SUPER+Shift+E` | system menu (exit) | Email webapp → **dropped** |
 | `SUPER+Shift+X` | lock | X webapp → **dropped** |
 | `SUPER+Shift+O` | OBS | Obsidian webapp → **dropped** |
+| `SUPER+Shift+Q` | close window | Calculator (new in 4.5) → still on `XF86Calculator` |
+| `SUPER+V` | dwindle preselect down | universal paste → `CTRL+V` |
 
-**Added on free keys:** `SUPER+Shift+Q` (close), `SUPER+N` (file manager),
-`SUPER+E` (toggle split), `SUPER+Shift+H`/`+V` (dwindle preselect), `SUPER+R`
+**Added on free keys:** `SUPER+N` (file manager),
+`SUPER+E` (toggle split), `SUPER+Shift+H` (dwindle preselect right),
+`SUPER+Shift+V` (clipboard history), `SUPER+R`
 (resize submap, same `j`/`k`/`l`/`ç` keys as i3).
 
 **Not ported:**
@@ -151,9 +165,10 @@ those changes will not appear here — re-merge against
 to `files/tmux/tmux.conf` and `files/herdr/config.toml`, which replace
 Omarchy's outright.
 
-`files/hypr/bindings.lua` and `autostart.lua` are safe to replace wholesale —
-Omarchy ships those as empty user-override templates. `input.lua`,
-`hyprland.lua` and `looknfeel.lua` are *appended to* by `after/06-hypr` for
+`files/hypr/bindings.lua`, `autostart.lua` and `workspaces.lua` are safe to
+replace wholesale — Omarchy ships the first two as empty user-override
+templates and the third is ours. `input.lua` and
+`hyprland.lua` are *appended to* by `after/06-hypr` for
 exactly this reason, guarded so re-running does not duplicate the block.
 
 **Everything replaced is backed up** as `<name>.omarchy-backup-<timestamp>`
@@ -182,13 +197,15 @@ Deployed to `~/.config/scripts/`.
 
 ## Notes on Omarchy defaults worth knowing
 
-**Unfocused windows are slightly transparent out of the box.** Omarchy tags
-every window `default-opacity` and applies `opacity = "0.985 0.96"` (active,
-inactive) in `/usr/share/omarchy/default/hypr/windows.lua`. It is a *window
-rule*, not a global setting — `decoration:inactive_opacity` reads `1.0`, so
-checking that option suggests nothing is transparent. `files/hypr/looknfeel.snippet.lua`
-re-applies the rule as `"1.0 1.0"` to turn it off. `SUPER+BACKSPACE` toggles it
-per window without any config change.
+**Some windows are slightly transparent out of the box.** Since Omarchy 4.5
+apps are opaque by default, but terminals, Nautilus, 1Password and Omawrite get
+`opacity = "0.985 0.96"` (active, inactive) through `o.transparent_window` in
+`/usr/share/omarchy/default/hypr/windows.lua`. It is a *window rule*, not a
+global setting — `decoration:inactive_opacity` reads `1.0`, so checking that
+option suggests nothing is transparent. `after/06-hypr` runs
+`omarchy hyprland window transparency opaque` (also under Appearance → Window
+Transparency) to make those solid too. `SUPER+BACKSPACE` toggles it per window
+without any config change.
 
 ## Secure Boot
 

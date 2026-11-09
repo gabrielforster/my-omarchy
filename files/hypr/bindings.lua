@@ -15,8 +15,10 @@ local scripts = os.getenv("HOME") .. "/.config/scripts"
 --   SUPER + F                 Fullscreen
 --   SUPER + ARROWS            Focus left/down/up/right
 --   SUPER + SHIFT + ARROWS    Move (swap) window
---   SUPER + 1..0              Switch to workspace
---   SUPER + SHIFT + 1..0      Move window to workspace
+--   SUPER + 1..0              Switch to workspace       } shared across monitors
+--   SUPER + SHIFT + 1..0      Move window to workspace  } as in i3; Omarchy 4.5
+--                                                         made them per monitor,
+--                                                         undone in workspaces.lua
 --   XF86Audio* / XF86MonBrightness*  Volume, media, brightness
 --                             (Omarchy's are strictly better: they also
 --                              cover mic mute, per-1% steps and OSD)
@@ -31,62 +33,63 @@ local scripts = os.getenv("HOME") .. "/.config/scripts"
 -- i3: `focus mode_toggle` (jump between the tiling and floating stacks).
 -- WAS: Omarchy menu -> moved to SUPER + D (below).
 -- Hyprland has no native equivalent, so this calls a helper script.
-hl.unbind("SUPER + SPACE")
-o.bind("SUPER + SPACE", "Focus tiling/floating toggle", scripts .. "/hypr-focus-mode-toggle.sh")
+o.rebind("SUPER + SPACE", "Focus tiling/floating toggle", scripts .. "/hypr-focus-mode-toggle.sh")
 
 -- i3: `$mod+d` launcher (was rofi). Omarchy's menu is also its app launcher.
 -- SUPER + D was unbound in Omarchy, so nothing is lost.
-o.bind("SUPER + D", "Omarchy menu", "omarchy-menu toggle")
+o.bind("SUPER + D", "Omarchy menu", { menu = "root" })
 
 -- i3: `$mod+p` screenshot (was flameshot gui).
 -- WAS: Pseudo window (dwindle mode where a tiled window floats at tile size).
 -- Dropped, not relocated. PRINT still takes a full screenshot.
-hl.unbind("SUPER + P")
-o.bind("SUPER + P", "Screenshot region", "omarchy-capture-screenshot region")
+o.rebind("SUPER + P", "Screenshot region", "omarchy-capture-screenshot region")
 
 -- i3: `$mod+Shift+space` floating toggle.
 -- WAS: Toggle top bar -> moved to SUPER + T (below).
-hl.unbind("SUPER + SHIFT + SPACE")
-o.bind("SUPER + SHIFT + SPACE", "Toggle window floating/tiling", hl.dsp.window.float({ action = "toggle" }))
+o.rebind("SUPER + SHIFT + SPACE", "Toggle window floating/tiling", hl.dsp.window.float({ action = "toggle" }))
 
 -- WAS: Toggle window floating/tiling -> moved to SUPER + SHIFT + SPACE above.
 -- Takes over the top bar toggle displaced from SUPER + SHIFT + SPACE.
 hl.unbind("SUPER + T")
 o.bind_toggle("SUPER + T", "Toggle top bar", "bar")
 
+-- Pairs with SUPER + P above: same region select, but OCRs the selection to
+-- the clipboard instead of saving an image. SUPER + CTRL + PRINT still does it.
+-- WAS: Google Photos webapp (photos.google.com). Dropped.
+o.rebind("SUPER + SHIFT + P", "Extract text (OCR) from screenshot", "omarchy-capture-text")
+
 -- i3: `$mod+Shift+c` reload config. In Hyprland reload and restart are the
 -- same operation, so i3's `$mod+Shift+r` (restart) is bound to it too.
 -- WAS: Calendar webapp (app.hey.com/calendar). Dropped.
-hl.unbind("SUPER + SHIFT + C")
-o.bind("SUPER + SHIFT + C", "Reload Hyprland config", "hyprctl reload")
+o.rebind("SUPER + SHIFT + C", "Reload Hyprland config", "hyprctl reload")
 o.bind("SUPER + SHIFT + R", "Reload Hyprland config", "hyprctl reload")
 
 -- i3: `$mod+Shift+e` exit session (i3-nagbar confirm).
 -- WAS: Email webapp (app.hey.com). Dropped.
 -- Omarchy's system menu is the confirm-style logout/reboot/shutdown dialog.
 -- SUPER + ESCAPE still opens it too.
-hl.unbind("SUPER + SHIFT + E")
-o.bind("SUPER + SHIFT + E", "System menu", "omarchy-menu toggle system")
+o.rebind("SUPER + SHIFT + E", "System menu", { menu = "system" })
 
 -- i3: `$mod+Shift+x` lock screen (was i3lock).
 -- WAS: X/Twitter webapp (x.com). Dropped.
 -- SUPER + CTRL + L still locks as well.
-hl.unbind("SUPER + SHIFT + X")
-o.bind("SUPER + SHIFT + X", "Lock system", "omarchy-system-lock")
+o.rebind("SUPER + SHIFT + X", "Lock system", "omarchy-system-lock")
 
 -- i3: `$mod+o` launch OBS. SUPER + O itself stays as Omarchy's
 -- "pop window out", so OBS lands on SHIFT.
 -- WAS: Obsidian webapp. Dropped.
-hl.unbind("SUPER + SHIFT + O")
-o.bind("SUPER + SHIFT + O", "OBS", { launch = "obs", focus = "^com.obsproject.Studio$" })
+o.rebind("SUPER + SHIFT + O", "OBS", { launch = "obs", focus = "^com.obsproject.Studio$" })
+
+
+-- i3: `$mod+Shift+q` kill window. SUPER + W and SUPER + Q still work too.
+-- WAS: Calculator (omacalc), new in Omarchy 4.5 (it moved here from
+-- SUPER + CTRL + Q). XF86Calculator still opens it.
+o.rebind("SUPER + SHIFT + Q", "Close window", hl.dsp.window.close())
 
 
 -- ---------------------------------------------------------------------------
 -- NEW BINDINGS — these keys were unbound in Omarchy, nothing displaced.
 -- ---------------------------------------------------------------------------
-
--- i3: `$mod+Shift+q` kill window. Omarchy's SUPER + W still works too.
-o.bind("SUPER + SHIFT + Q", "Close window", hl.dsp.window.close())
 
 -- i3: `$mod+n` file manager. Omarchy's SUPER + SHIFT + F still works too.
 o.bind("SUPER + N", "File manager", { omarchy = "nautilus" })
@@ -102,12 +105,11 @@ o.bind("SUPER + E", "Toggle window split", hl.dsp.layout("togglesplit"))
 -- The horizontal one stays on SHIFT for now; bare SUPER + H is free if the
 -- pair should ever be symmetric again.
 o.bind("SUPER + SHIFT + H", "Split horizontal (next window right)", hl.dsp.layout("preselect r"))
-hl.unbind("SUPER + V")
-o.bind("SUPER + V", "Split vertical (next window below)", hl.dsp.layout("preselect d"))
+o.rebind("SUPER + V", "Split vertical (next window below)", hl.dsp.layout("preselect d"))
 
 -- Clipboard history on SUPER + SHIFT + V. Omarchy binds this to
 -- SUPER + CTRL + V by default; that binding is left in place as well.
-o.bind("SUPER + SHIFT + V", "Clipboard manager", "omarchy-shell shell toggle omarchy.clipboard")
+o.bind("SUPER + SHIFT + V", "Clipboard manager", { panel = "omarchy.clipboard" })
 
 
 -- ---------------------------------------------------------------------------
@@ -142,7 +144,8 @@ o.bind("SUPER + R", "Resize mode", hl.dsp.submap("resize"))
 -- NOT PORTED — i3 concepts with no Hyprland equivalent.
 --
 --   $mod+a  focus parent
---       Dwindle has no focusable parent container. Left unbound.
+--       Dwindle has no focusable parent container. SUPER + A is Omarchy's
+--       universal "select all" since 4.5.
 --
 --   $mod+s  layout stacking
 --   $mod+w  layout tabbed
@@ -150,6 +153,8 @@ o.bind("SUPER + R", "Resize mode", hl.dsp.submap("resize"))
 --       window groups: SUPER + G toggles grouping and draws a tab bar,
 --       SUPER + CTRL + LEFT/RIGHT moves between grouped windows.
 --       SUPER + S stays scratchpad, SUPER + W stays close window.
+--       (SUPER + L now cycles the workspace layout: tiling, scrolling,
+--       floating.)
 --
 --   exec dunst / nm-applet / picom / copyq / xss-lock / dex
 --       All handled by omarchy-shell and Hyprland natively.
@@ -157,3 +162,12 @@ o.bind("SUPER + R", "Resize mode", hl.dsp.submap("resize"))
 --   setxkbmap / xset r rate / .screenlayout script
 --       Wayland equivalents live in ~/.config/hypr/input.lua and monitors.lua.
 -- ---------------------------------------------------------------------------
+
+-- Dictation keys from before Alt + Space and Right Alt became the defaults
+-- (added to the live file by an Omarchy 4.5 migration; kept here so
+-- re-running after/06-hypr doesn't drop them).
+-- Remove these lines to give the keys back to applications.
+if o.dictation_installed and o.dictation_installed() then
+  o.bind("SUPER + CTRL + X", "Toggle dictation", "omarchy-dictation toggle")
+  o.bind_hold("F9", "Start dictation (push-to-talk)", "omarchy-dictation start", "Stop dictation (push-to-talk)", "omarchy-dictation stop")
+end

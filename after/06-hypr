@@ -3,9 +3,9 @@
 # rules.
 #
 # Omarchy loads ~/.config/hypr/*.lua after its own defaults, so these are
-# overrides rather than a fork of the defaults. bindings.lua and autostart.lua
-# are replaced outright; input.lua and hyprland.lua only get a block appended,
-# so Omarchy can keep improving the rest of those files.
+# overrides rather than a fork of the defaults. bindings.lua, autostart.lua and
+# workspaces.lua are replaced outright; input.lua and hyprland.lua only get a
+# block appended, so Omarchy can keep improving the rest of those files.
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -18,6 +18,10 @@ install -Dm644 "$repo_dir/files/hypr/bindings.lua" ~/.config/hypr/bindings.lua
 
 backup ~/.config/hypr/autostart.lua
 install -Dm644 "$repo_dir/files/hypr/autostart.lua" ~/.config/hypr/autostart.lua
+
+# Shared (i3-style) workspaces instead of Omarchy 4.5's per-monitor ones.
+# Required from hyprland.lua below.
+install -Dm644 "$repo_dir/files/hypr/workspaces.lua" ~/.config/hypr/workspaces.lua
 
 # Appended, and only once.
 append_once() {
@@ -36,8 +40,19 @@ append_once "repeat_delay = 200" ~/.config/hypr/input.lua \
   "$repo_dir/files/hypr/input.snippet.lua"
 append_once 'o.window("^([Dd]iscord)$"' ~/.config/hypr/hyprland.lua \
   "$repo_dir/files/hypr/windows.snippet.lua"
-append_once 'opacity = "1.0 1.0"' ~/.config/hypr/looknfeel.lua \
-  "$repo_dir/files/hypr/looknfeel.snippet.lua"
+append_once 'require("hypr.workspaces")' ~/.config/hypr/hyprland.lua \
+  "$repo_dir/files/hypr/workspaces.snippet.lua"
+
+# Fully opaque windows. Since Omarchy 4.5 apps are opaque by default and only
+# terminals (plus Nautilus, 1Password, Omawrite) are transparent; this makes
+# those solid too. Replaces the old looknfeel.lua "default-opacity" rule, whose
+# tag 4.5 no longer sets.
+omarchy hyprland window transparency opaque
+
+# Drop the per-monitor block map so the bar stops splitting workspaces by
+# monitor. Done last: Hyprland auto-reloads on every save above, and a reload
+# before the require is in place would write the file again.
+rm -f "${XDG_STATE_HOME:-$HOME/.local/state}/omarchy/monitor-workspaces"
 
 hyprctl reload
 echo "--- hyprctl configerrors (empty is good) ---"

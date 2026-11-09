@@ -5,7 +5,7 @@
 # Bound to prefix+shift+o in ~/.config/herdr/config.toml.
 #
 # Unlike open_notification_target (prefix+o), this works whether or not a
-# toast is currently on screen, and cycles through every blocked agent.
+# toast is currently on screen, and cycles through every waiting agent.
 set -euo pipefail
 
 command -v herdr >/dev/null 2>&1 || exit 0
@@ -24,7 +24,7 @@ mapfile -t blocked < <(
 )
 (( ${#blocked[@]} )) || exit 0
 
-# Jump to the first blocked agent after the focused one, wrapping around.
+# Jump to the first waiting agent after the focused one, wrapping around.
 current=$(jq -r '.result.agents | map(select(.focused)) | .[0].pane_id // empty' <<<"$resp")
 target=${blocked[0]}
 for i in "${!blocked[@]}"; do
@@ -34,4 +34,16 @@ for i in "${!blocked[@]}"; do
     fi
 done
 
-herdr agent focus "$target"
+# herdr 0.9.0: agent focus moves the server-side focus but the attached client
+# keeps rendering the workspace it was on, so the jump looks like it did nothing
+# when the target lives in another workspace. Focusing the workspace and tab
+# first is what the client actually follows; agent focus then lands the pane.
+read -r workspace tab < <(
+    jq -r --arg pane "$target" '.result.agents
+           | map(select(.pane_id == $pane))
+           | .[0]
+           | "\(.workspace_id) \(.tab_id)"' <<<"$resp"
+)
+herdr workspace focus "$workspace" >/dev/null
+herdr tab focus "$tab" >/dev/null
+herdr agent focus "$target" >/dev/null

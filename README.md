@@ -192,7 +192,7 @@ Deployed to `~/.config/scripts/`.
 |---|---|
 | `tmux-sessionizer.sh` | fzf project picker → tmux session. Scans `~/Work`, `~/Work/*`, `~/Projects`, `~/.config`. |
 | `herdr-sessionizer.sh` | Same picker → herdr workspace. Focuses by `label` if it exists, else creates with `--cwd --label --focus`. |
-| `herdr-focus-blocked.sh` | Cycles focus through agents with `agent_status == "blocked"`. Bound to `prefix+shift+o`. |
+| `herdr-focus-blocked.sh` | Cycles focus through agents waiting on you: `blocked` first, then `done` with an unseen completion (focusing marks it seen). Bound to `prefix+shift+o`. |
 | `hypr-focus-mode-toggle.sh` | i3's `focus mode_toggle` — Hyprland has no equivalent, so this walks the client list. Bound to `SUPER+SPACE`. |
 
 ## Notes on Omarchy defaults worth knowing

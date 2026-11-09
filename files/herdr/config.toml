@@ -16,6 +16,17 @@ navigate_pane_down      = "down"
 split_horizontal = "prefix+\""
 split_vertical = "prefix+%"
 
+# Worktrees and workspaces each shift one key down the d/g pair:
+#   prefix+shift+g  new worktree     (herdr default)
+#   prefix+shift+d  remove worktree  (unbound by default; opens a confirmation)
+#   prefix+d        close workspace  (was prefix+shift+d)
+# Built-in new_worktree is unbound: on 0.9.0 it focuses the new worktree
+# server-side but the attached client keeps rendering the old workspace about
+# half the time. The popup command below creates it and lands the focus.
+new_worktree = ""
+remove_worktree = "prefix+shift+d"
+close_workspace = "prefix+d"
+
 cycle_pane_previous = ""
 next_agent = "prefix+tab"
 previous_agent = "prefix+shift+tab"
@@ -52,3 +63,14 @@ key = "prefix+shift+o"
 type = "shell"
 command = "/home/gabriel/.config/scripts/herdr-focus-blocked.sh"
 description = "focus next waiting agent (blocked, then done)"
+
+# Replaces the built-in prefix+shift+g worktree dialog: prompts for a branch
+# name, then creates the worktree over the socket API with --focus so the
+# attached client actually switches to it.
+[[keys.command]]
+key = "prefix+shift+g"
+type = "popup"
+command = "/home/gabriel/.config/scripts/herdr-new-worktree.sh"
+description = "new worktree (focus follows)"
+width = "70%"
+height = "30%"

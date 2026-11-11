@@ -4,7 +4,7 @@ config-file = ?"~/.local/state/omarchy/current/theme/ghostty.conf"
 # Font (from dotfiles)
 font-family = "IoskeleyMonoTerm Nerd Font"
 font-style = Regular
-font-size = 15
+font-size = 11
 
 # Window (from dotfiles: tight padding, no GTK titlebar)
 window-theme = ghostty
